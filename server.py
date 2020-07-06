@@ -3,16 +3,24 @@ from asyncio import StreamReader, StreamWriter
 from proxys import Proxy, ProxyFactory
 from proxy_client import ProxyClient
 import logging
+import sys
+
+if sys.version_info < (3, 7)[:2]:
+    from asyncio import ensure_future as create_task
+else:
+    from asyncio import create_task
 
 logger = logging.getLogger(__file__)
+
+__all__ = ('handler', )
 
 
 class ServerReader:
     def __init__(self, reader: StreamReader, writer: StreamWriter):
         self._reader = reader
         self._writer = writer
-        self.write_timeout = 10
-        self.read_timeout = 10
+        self.write_timeout = 20
+        self.read_timeout = 20
         self.start_row = b''
 
     @classmethod
@@ -63,8 +71,8 @@ class Synchronizer:
         start_row = self.server_connect.start_row
         print(start_row)
         await self.client_connect.create_proxy_connect(start_row)
-        task_server = asyncio.create_task(self.away(self.server_connect, self.client_connect))
-        task_client = asyncio.create_task(self.away(self.client_connect, self.server_connect))
+        task_server = create_task(self.away(self.server_connect, self.client_connect))
+        task_client = create_task(self.away(self.client_connect, self.server_connect))
         await asyncio.gather(task_server, task_client)
         logger.debug('disconect')
 
@@ -86,19 +94,3 @@ async def handler(reader: StreamReader, writer: StreamWriter):
     server_connect = await ServerReader.init(reader=reader, writer=writer)
     synchronizer = await Synchronizer.init(server_connect=server_connect)
     await synchronizer.start()
-
-
-async def start():
-    print('start')
-    try:
-        srv = await asyncio.start_server(handler, host='0.0.0.0', port=5555, )
-        await srv.serve_forever()
-    finally:
-        # await srv.wait_closed()
-        await asyncio.sleep(1)
-        print('stop')
-
-
-if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
-    asyncio.run(start(), debug=True)

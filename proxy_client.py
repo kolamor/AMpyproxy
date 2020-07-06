@@ -9,8 +9,8 @@ class Client:
         self._writer = writer
         self._host = host
         self._port = port
-        self.read_timeout = 10
-        self.write_timeout = 10
+        self.read_timeout = 20
+        self.write_timeout = 20
         self.proxy = None  # type: Proxy
 
     @classmethod
