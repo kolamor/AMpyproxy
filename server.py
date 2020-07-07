@@ -82,13 +82,15 @@ class Synchronizer:
                 chunk = await reader.read()
                 if chunk == b'':
                     await asyncio.sleep(0)
-                    break
+                    continue
                 await writer.send(chunk)
                 await asyncio.sleep(0)
+        except TimeoutError as e:
+            print('timeout', e, e.args)
         except Exception as e:
             logger.debug(f'{e, e.args}')
         finally:
-            pass
+            print('stop_connection')
 
 async def handler(reader: StreamReader, writer: StreamWriter):
     server_connect = await ServerReader.init(reader=reader, writer=writer)
